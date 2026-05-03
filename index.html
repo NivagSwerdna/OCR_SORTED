@@ -1,0 +1,1258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sorting Algorithms — OCR A-Level CS H446</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ── RESET & BASE ─────────────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:       #0C0E14;
+    --surface:  #131720;
+    --card:     #1A2033;
+    --border:   #252D42;
+    --text:     #CBD5E1;
+    --muted:    #64748B;
+    --bright:   #F1F5F9;
+
+    --bubble:   #0891B2;
+    --insertion:#059669;
+    --merge:    #7C3AED;
+    --quick:    #DC2626;
+    --bigo:     #B45309;
+
+    --compare:  #F59E0B;
+    --swap:     #EF4444;
+    --sorted:   #10B981;
+    --pivot:    #FB923C;
+    --left-p:   #38BDF8;
+    --right-p:  #A78BFA;
+
+    --radius:   10px;
+    --mono:     'DM Mono', monospace;
+    --sans:     'DM Sans', sans-serif;
+    --display:  'Syne', sans-serif;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ───────────────────────────────────────────────────────── */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(12,14,20,0.92);
+    backdrop-filter: blur(12px);
+    display: flex; align-items: center; gap: 2rem;
+    height: 56px;
+  }
+  .logo {
+    font-family: var(--display);
+    font-size: 1.1rem;
+    color: var(--bright);
+    white-space: nowrap;
+  }
+  .logo span { color: var(--compare); }
+  nav { display: flex; gap: 0.25rem; flex: 1; overflow-x: auto; }
+  nav button {
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    font-family: var(--sans);
+    font-size: 0.85rem;
+    font-weight: 500;
+    padding: 0.35rem 0.9rem;
+    border-radius: 6px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s;
+  }
+  nav button:hover { color: var(--bright); background: var(--card); }
+  nav button.active {
+    color: var(--bright);
+    background: var(--card);
+    outline: 1px solid var(--border);
+  }
+  nav button.active.bubble  { color: var(--bubble);    outline-color: var(--bubble); }
+  nav button.active.insertion{ color: var(--insertion); outline-color: var(--insertion); }
+  nav button.active.merge   { color: var(--merge);     outline-color: var(--merge); }
+  nav button.active.quick   { color: var(--quick);     outline-color: var(--quick); }
+  .nav-tag {
+    font-size: 0.65rem;
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+    font-weight: 600;
+    vertical-align: middle;
+    margin-left: 4px;
+    background: rgba(255,255,255,0.08);
+  }
+
+  /* ── LAYOUT ───────────────────────────────────────────────────────── */
+  .page { max-width: 1280px; margin: 0 auto; padding: 2rem 2rem 4rem; }
+
+  .algo-header {
+    display: flex; align-items: flex-start;
+    justify-content: space-between; gap: 2rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+  }
+  .algo-title {
+    font-family: var(--display);
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    line-height: 1;
+    color: var(--bright);
+  }
+  .algo-title .accent { display: block; font-size: 0.45em; font-family: var(--mono); letter-spacing: 0.05em; margin-bottom: 0.3em; }
+  .complexity-pills { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+  .pill {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    padding: 0.3rem 0.7rem;
+    border-radius: 20px;
+    border: 1px solid;
+    white-space: nowrap;
+  }
+  .pill.good  { border-color: var(--sorted); color: var(--sorted); background: rgba(16,185,129,0.08); }
+  .pill.ok    { border-color: var(--compare); color: var(--compare); background: rgba(245,158,11,0.08); }
+  .pill.bad   { border-color: var(--swap); color: var(--swap); background: rgba(239,68,68,0.08); }
+  .pill.space { border-color: var(--muted); color: var(--muted); background: transparent; }
+  .pill.stable{ border-color: #60A5FA; color: #60A5FA; background: rgba(96,165,250,0.08); }
+  .pill.unstable{ border-color: var(--pivot); color: var(--pivot); background: rgba(251,146,60,0.08); }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  @media (max-width: 900px) { .two-col { grid-template-columns: 1fr; } }
+
+  .three-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  @media (max-width: 1100px) { .three-col { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 700px)  { .three-col { grid-template-columns: 1fr; } }
+
+  /* ── CARDS ────────────────────────────────────────────────────────── */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .card-header {
+    padding: 0.75rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .card-header .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: currentColor; margin-right: 0.6rem;
+  }
+  .card-body { padding: 1.25rem; }
+
+  /* ── VISUALISER ───────────────────────────────────────────────────── */
+  .vis-card { grid-column: 1 / -1; }
+  .vis-wrap {
+    height: 200px;
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    padding: 0.5rem 1.25rem 0;
+    position: relative;
+  }
+  .bar {
+    flex: 1;
+    border-radius: 3px 3px 0 0;
+    background: var(--border);
+    transition: height 0.12s ease, background 0.1s ease;
+    position: relative;
+    min-width: 4px;
+  }
+  .bar.comparing { background: var(--compare) !important; }
+  .bar.swapping  { background: var(--swap)    !important; }
+  .bar.sorted    { background: var(--sorted)  !important; }
+  .bar.pivot     { background: var(--pivot)   !important; }
+  .bar.left-part { background: var(--left-p)  !important; }
+  .bar.right-part{ background: var(--right-p) !important; }
+  .bar.key       { background: #60A5FA        !important; }
+
+  .vis-controls {
+    padding: 1rem 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  .btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 0.82rem;
+    font-weight: 500;
+    padding: 0.4rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: inline-flex; align-items: center; gap: 0.4rem;
+  }
+  .btn:hover { border-color: var(--muted); color: var(--bright); }
+  .btn.primary {
+    background: var(--accent-color, #374151);
+    border-color: var(--accent-color, #374151);
+    color: #fff;
+  }
+  .btn.primary:hover { opacity: 0.9; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .speed-wrap { display: flex; align-items: center; gap: 0.5rem; margin-left: auto; font-size: 0.8rem; color: var(--muted); }
+  .speed-wrap input[type=range] {
+    width: 90px; accent-color: var(--accent-color, #6366F1);
+  }
+  .stats { display: flex; gap: 1.5rem; flex-wrap: wrap; }
+  .stat { font-family: var(--mono); font-size: 0.78rem; color: var(--muted); }
+  .stat span { color: var(--bright); font-weight: 500; }
+
+  /* ── COLOUR KEY ───────────────────────────────────────────────────── */
+  .key-row {
+    padding: 0.6rem 1.25rem;
+    border-top: 1px solid var(--border);
+    display: flex; gap: 1.2rem; flex-wrap: wrap;
+    font-size: 0.72rem; color: var(--muted);
+  }
+  .key-item { display: flex; align-items: center; gap: 0.4rem; }
+  .key-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+
+  /* ── DESCRIPTION ──────────────────────────────────────────────────── */
+  .desc p { color: var(--text); font-size: 0.9rem; margin-bottom: 0.6rem; }
+  .desc p:last-child { margin-bottom: 0; }
+  .desc strong { color: var(--bright); }
+  .desc .tag-line {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--accent-color, var(--muted));
+    border-left: 2px solid var(--accent-color, var(--border));
+    padding-left: 0.75rem;
+    margin-bottom: 0.8rem;
+    font-style: italic;
+  }
+
+  /* ── CODE PANELS ──────────────────────────────────────────────────── */
+  .code-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); }
+  .code-tab {
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    padding: 0.6rem 1rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+  }
+  .code-tab.active {
+    color: var(--bright);
+    border-bottom-color: var(--accent-color, #6366F1);
+  }
+  pre {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    line-height: 1.7;
+    padding: 1.25rem;
+    overflow-x: auto;
+    background: #0a0c12;
+    margin: 0;
+  }
+  .ln { color: #334155; user-select: none; display: inline-block; width: 2em; text-align: right; margin-right: 1.2em; }
+
+  /* Syntax highlight classes */
+  .kw  { color: #C084FC; }  /* keywords */
+  .fn  { color: #60A5FA; }  /* function names */
+  .op  { color: #94A3B8; }  /* operators */
+  .cm  { color: #475569; font-style: italic; }  /* comments */
+  .st  { color: #86EFAC; }  /* strings */
+  .num { color: #FCA5A5; }  /* numbers */
+  .var { color: #E2E8F0; }  /* variables */
+  .type{ color: #F9A8D4; }  /* types */
+
+  /* OCR Pseudocode specific */
+  .ocr-kw   { color: #C084FC; font-weight: 500; } /* procedure, function, FOR, IF etc */
+  .ocr-arr  { color: #FCD34D; }                    /* ← */
+  .ocr-cmt  { color: #475569; font-style: italic; } /* // comments */
+  .ocr-call { color: #60A5FA; }                    /* function calls */
+  .ocr-num  { color: #FCA5A5; }                    /* numbers */
+
+  /* ── PSEUDOCODE BLOCK ─────────────────────────────────────────────── */
+  .pseudo-wrap {
+    background: #0D0F18;
+    border: 1px solid #1E2A45;
+    border-radius: 8px;
+    overflow: hidden;
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    line-height: 1.8;
+  }
+  .pseudo-wrap pre { background: transparent; }
+  .pseudo-note {
+    font-size: 0.72rem;
+    color: var(--muted);
+    padding: 0.5rem 1.25rem;
+    border-top: 1px solid var(--border);
+    font-style: italic;
+  }
+
+  /* ── COMPLEXITY TABLE ─────────────────────────────────────────────── */
+  .complexity-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  .complexity-table th {
+    text-align: left;
+    padding: 0.5rem 0.75rem;
+    color: var(--muted);
+    font-weight: 500;
+    font-size: 0.72rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+  }
+  .complexity-table td {
+    padding: 0.55rem 0.75rem;
+    border-bottom: 1px solid rgba(37,45,66,0.5);
+    font-family: var(--mono);
+    font-size: 0.8rem;
+  }
+  .complexity-table tr:last-child td { border-bottom: none; }
+  .complexity-table tr:hover td { background: rgba(255,255,255,0.02); }
+  .complexity-table td:first-child { color: var(--bright); font-weight: 500; }
+  .good-c { color: var(--sorted); }
+  .ok-c   { color: var(--compare); }
+  .bad-c  { color: var(--swap); }
+  .neu-c  { color: var(--muted); }
+
+  /* ── STATUS BAR ───────────────────────────────────────────────────── */
+  .status-bar {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    padding: 0.5rem 1.25rem;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    min-height: 2rem;
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .status-bar .step-label { color: var(--accent-color, #6366F1); font-weight: 500; }
+
+  /* ── FOOTER ───────────────────────────────────────────────────────── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 1.5rem 2rem;
+    text-align: center;
+    font-size: 0.78rem;
+    color: var(--muted);
+    line-height: 1.8;
+  }
+  footer a { color: var(--text); }
+
+  /* ── SECTION DIVIDER ──────────────────────────────────────────────── */
+  .section-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.75rem;
+    display: flex; align-items: center; gap: 0.75rem;
+  }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* ── ARRAY SIZE CONTROL ───────────────────────────────────────────── */
+  .size-btns { display: flex; gap: 0.25rem; }
+  .size-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    padding: 0.25rem 0.55rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.12s;
+  }
+  .size-btn.active, .size-btn:hover { border-color: var(--accent-color, #6366F1); color: var(--bright); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">sort<span>.</span>study</div>
+  <nav id="mainNav">
+    <button class="bubble active" data-algo="bubble" onclick="switchAlgo('bubble')">
+      Bubble Sort <span class="nav-tag">O(n²)</span>
+    </button>
+    <button class="insertion" data-algo="insertion" onclick="switchAlgo('insertion')">
+      Insertion Sort <span class="nav-tag">O(n²)</span>
+    </button>
+    <button class="merge" data-algo="merge" onclick="switchAlgo('merge')">
+      Merge Sort <span class="nav-tag">O(n log n)</span>
+    </button>
+    <button class="quick" data-algo="quick" onclick="switchAlgo('quick')">
+      Quick Sort <span class="nav-tag">O(n log n)*</span>
+    </button>
+  </nav>
+</header>
+
+<div class="page" id="appRoot"></div>
+
+<footer>
+  sort.study — A-Level Computer Science OCR H446 &nbsp;|&nbsp;
+  Algorithms: Section 2.3.1(f) &nbsp;|&nbsp;
+  Pseudocode notation follows the <a href="https://www.ocr.org.uk" target="_blank">OCR Pseudocode Guide for Teachers</a>
+  <br>Works offline · Deploy to GitHub Pages with no build step · Open source
+</footer>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════════
+// DATA — algorithms metadata, code, pseudocode
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const ALGOS = {
+
+  bubble: {
+    name: 'Bubble Sort',
+    accent: '#0891B2',
+    tag: 'Comparison · In-place · Stable',
+    description: [
+      '<span class="tag-line">Like bubbles rising to the surface — the largest unsorted element floats to the end of the array on each pass.</span>',
+      'Bubble sort repeatedly compares <strong>adjacent elements</strong> and swaps them if they are in the wrong order. After each complete pass through the array, the next-largest element is guaranteed to be in its final sorted position.',
+      'The algorithm stops early if a full pass produces no swaps — this gives an O(n) best case on already-sorted data with the <strong>swapped flag optimisation</strong>.'
+    ],
+    complexity: [
+      { case: 'Best',    time: 'O(n)',   when: 'Array already sorted (with swapped flag)' },
+      { case: 'Average', time: 'O(n²)',  when: 'Random order' },
+      { case: 'Worst',   time: 'O(n²)',  when: 'Reverse-sorted array' },
+      { case: 'Space',   time: 'O(1)',   when: 'In-place — only temp, i, j variables' },
+    ],
+    pills: [
+      { label: 'Best O(n)',    cls: 'good'   },
+      { label: 'Avg O(n²)',    cls: 'bad'    },
+      { label: 'Worst O(n²)',  cls: 'bad'    },
+      { label: 'Space O(1)',   cls: 'space'  },
+      { label: 'Stable ✓',    cls: 'stable' },
+    ],
+    colorKey: [
+      { color: 'var(--compare)', label: 'Comparing' },
+      { color: 'var(--swap)',    label: 'Swapping'  },
+      { color: 'var(--sorted)', label: 'Sorted'    },
+    ],
+    pseudocode: `<span class="ocr-kw">procedure</span> bubbleSort(array)
+   n <span class="ocr-arr">←</span> length(array)
+   <span class="ocr-kw">FOR</span> i <span class="ocr-arr">←</span> <span class="ocr-num">0</span> <span class="ocr-kw">TO</span> n <span class="ocr-arr">−</span> <span class="ocr-num">2</span>
+      swapped <span class="ocr-arr">←</span> <span class="ocr-kw">FALSE</span>                 <span class="ocr-cmt">// optimisation flag</span>
+      <span class="ocr-kw">FOR</span> j <span class="ocr-arr">←</span> <span class="ocr-num">0</span> <span class="ocr-kw">TO</span> n <span class="ocr-arr">−</span> <span class="ocr-num">2</span> <span class="ocr-arr">−</span> i    <span class="ocr-cmt">// inner loop shrinks each pass</span>
+         <span class="ocr-kw">IF</span> array[j] <span class="ocr-arr">&gt;</span> array[j<span class="ocr-arr">+</span><span class="ocr-num">1</span>] <span class="ocr-kw">THEN</span>
+            temp <span class="ocr-arr">←</span> array[j]
+            array[j] <span class="ocr-arr">←</span> array[j<span class="ocr-arr">+</span><span class="ocr-num">1</span>]
+            array[j<span class="ocr-arr">+</span><span class="ocr-num">1</span>] <span class="ocr-arr">←</span> temp
+            swapped <span class="ocr-arr">←</span> <span class="ocr-kw">TRUE</span>
+         <span class="ocr-kw">ENDIF</span>
+      <span class="ocr-kw">NEXT</span> j
+      <span class="ocr-kw">IF NOT</span> swapped <span class="ocr-kw">THEN</span> <span class="ocr-kw">return</span> <span class="ocr-kw">ENDIF</span>  <span class="ocr-cmt">// exit early if already sorted</span>
+   <span class="ocr-kw">NEXT</span> i
+<span class="ocr-kw">endprocedure</span>`,
+    pseudoNote: 'OCR H446 notation · Assignment uses ← · Loops use FOR/NEXT · Conditions use IF/THEN/ENDIF',
+
+    js: `<span class="cm">// Bubble Sort — JavaScript</span>
+<span class="kw">function</span> <span class="fn">bubbleSort</span>(arr) {
+  <span class="kw">const</span> n <span class="op">=</span> arr.length;
+  <span class="kw">for</span> (<span class="kw">let</span> i <span class="op">=</span> <span class="num">0</span>; i <span class="op">&lt;</span> n <span class="op">-</span> <span class="num">1</span>; i<span class="op">++</span>) {
+    <span class="kw">let</span> swapped <span class="op">=</span> <span class="kw">false</span>;
+    <span class="kw">for</span> (<span class="kw">let</span> j <span class="op">=</span> <span class="num">0</span>; j <span class="op">&lt;</span> n <span class="op">-</span> <span class="num">1</span> <span class="op">-</span> i; j<span class="op">++</span>) {
+      <span class="kw">if</span> (arr[j] <span class="op">&gt;</span> arr[j <span class="op">+</span> <span class="num">1</span>]) {
+        [arr[j], arr[j <span class="op">+</span> <span class="num">1</span>]] <span class="op">=</span> [arr[j <span class="op">+</span> <span class="num">1</span>], arr[j]]; <span class="cm">// destructuring swap</span>
+        swapped <span class="op">=</span> <span class="kw">true</span>;
+      }
+    }
+    <span class="kw">if</span> (!swapped) <span class="kw">break</span>; <span class="cm">// already sorted</span>
+  }
+  <span class="kw">return</span> arr;
+}
+
+<span class="cm">// Usage</span>
+<span class="kw">const</span> arr <span class="op">=</span> [<span class="num">5</span>, <span class="num">3</span>, <span class="num">8</span>, <span class="num">1</span>, <span class="num">4</span>];
+console.log(<span class="fn">bubbleSort</span>(arr)); <span class="cm">// [1, 3, 4, 5, 8]</span>`,
+
+    py: `<span class="cm"># Bubble Sort — Python</span>
+<span class="kw">def</span> <span class="fn">bubble_sort</span>(arr):
+    n <span class="op">=</span> <span class="fn">len</span>(arr)
+    <span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(n <span class="op">-</span> <span class="num">1</span>):
+        swapped <span class="op">=</span> <span class="kw">False</span>
+        <span class="kw">for</span> j <span class="kw">in</span> <span class="fn">range</span>(n <span class="op">-</span> <span class="num">1</span> <span class="op">-</span> i):
+            <span class="kw">if</span> arr[j] <span class="op">&gt;</span> arr[j <span class="op">+</span> <span class="num">1</span>]:
+                arr[j], arr[j <span class="op">+</span> <span class="num">1</span>] <span class="op">=</span> arr[j <span class="op">+</span> <span class="num">1</span>], arr[j]  <span class="cm"># pythonic swap</span>
+                swapped <span class="op">=</span> <span class="kw">True</span>
+        <span class="kw">if not</span> swapped:
+            <span class="kw">break</span>  <span class="cm"># already sorted — O(n) best case</span>
+    <span class="kw">return</span> arr
+
+<span class="cm"># Usage</span>
+arr <span class="op">=</span> [<span class="num">5</span>, <span class="num">3</span>, <span class="num">8</span>, <span class="num">1</span>, <span class="num">4</span>]
+<span class="fn">print</span>(bubble_sort(arr))  <span class="cm"># [1, 3, 4, 5, 8]</span>`,
+  },
+
+  insertion: {
+    name: 'Insertion Sort',
+    accent: '#059669',
+    tag: 'Comparison · In-place · Stable',
+    description: [
+      '<span class="tag-line">Like sorting playing cards — pick each new card and slide it left into its correct position in the already-sorted hand.</span>',
+      'Insertion sort maintains a <strong>sorted portion</strong> (left) and an <strong>unsorted portion</strong> (right). Each pass takes the next element — the <strong>key</strong> — and inserts it into its correct position by shifting larger elements one place right.',
+      'Exceptionally efficient on <strong>nearly-sorted data</strong> (O(n) best case) and ideal for streaming/online data arriving one element at a time.'
+    ],
+    complexity: [
+      { case: 'Best',    time: 'O(n)',   when: 'Already sorted — WHILE exits immediately each pass' },
+      { case: 'Average', time: 'O(n²)',  when: 'Random order' },
+      { case: 'Worst',   time: 'O(n²)',  when: 'Reverse-sorted — maximum shifts every pass' },
+      { case: 'Space',   time: 'O(1)',   when: 'In-place — only key, i, j variables' },
+    ],
+    pills: [
+      { label: 'Best O(n)',    cls: 'good'   },
+      { label: 'Avg O(n²)',    cls: 'bad'    },
+      { label: 'Worst O(n²)',  cls: 'bad'    },
+      { label: 'Space O(1)',   cls: 'space'  },
+      { label: 'Stable ✓',    cls: 'stable' },
+    ],
+    colorKey: [
+      { color: '#60A5FA',      label: 'Key element' },
+      { color: 'var(--swap)',  label: 'Shifting right' },
+      { color: 'var(--sorted)', label: 'Sorted portion' },
+    ],
+    pseudocode: `<span class="ocr-kw">procedure</span> insertionSort(array)
+   <span class="ocr-kw">FOR</span> i <span class="ocr-arr">←</span> <span class="ocr-num">1</span> <span class="ocr-kw">TO</span> length(array) <span class="ocr-arr">−</span> <span class="ocr-num">1</span>   <span class="ocr-cmt">// index 0 trivially sorted</span>
+      key <span class="ocr-arr">←</span> array[i]               <span class="ocr-cmt">// element to insert</span>
+      j <span class="ocr-arr">←</span> i <span class="ocr-arr">−</span> <span class="ocr-num">1</span>
+      <span class="ocr-kw">WHILE</span> j <span class="ocr-arr">≥</span> <span class="ocr-num">0</span> <span class="ocr-kw">AND</span> array[j] <span class="ocr-arr">&gt;</span> key
+         array[j <span class="ocr-arr">+</span> <span class="ocr-num">1</span>] <span class="ocr-arr">←</span> array[j]  <span class="ocr-cmt">// shift element right</span>
+         j <span class="ocr-arr">←</span> j <span class="ocr-arr">−</span> <span class="ocr-num">1</span>
+      <span class="ocr-kw">ENDWHILE</span>
+      array[j <span class="ocr-arr">+</span> <span class="ocr-num">1</span>] <span class="ocr-arr">←</span> key          <span class="ocr-cmt">// insert key in correct position</span>
+   <span class="ocr-kw">NEXT</span> i
+<span class="ocr-kw">endprocedure</span>`,
+    pseudoNote: 'Key difference from bubble sort: uses WHILE for the inner loop so it exits as soon as the correct position is found.',
+
+    js: `<span class="cm">// Insertion Sort — JavaScript</span>
+<span class="kw">function</span> <span class="fn">insertionSort</span>(arr) {
+  <span class="kw">for</span> (<span class="kw">let</span> i <span class="op">=</span> <span class="num">1</span>; i <span class="op">&lt;</span> arr.length; i<span class="op">++</span>) {
+    <span class="kw">const</span> key <span class="op">=</span> arr[i]; <span class="cm">// the element to insert</span>
+    <span class="kw">let</span> j <span class="op">=</span> i <span class="op">-</span> <span class="num">1</span>;
+    <span class="kw">while</span> (j <span class="op">&gt;=</span> <span class="num">0</span> <span class="op">&amp;&amp;</span> arr[j] <span class="op">&gt;</span> key) {
+      arr[j <span class="op">+</span> <span class="num">1</span>] <span class="op">=</span> arr[j]; <span class="cm">// shift right</span>
+      j<span class="op">--</span>;
+    }
+    arr[j <span class="op">+</span> <span class="num">1</span>] <span class="op">=</span> key; <span class="cm">// drop key into position</span>
+  }
+  <span class="kw">return</span> arr;
+}
+
+<span class="cm">// Usage</span>
+<span class="kw">const</span> arr <span class="op">=</span> [<span class="num">6</span>, <span class="num">2</span>, <span class="num">8</span>, <span class="num">4</span>, <span class="num">3</span>];
+console.log(<span class="fn">insertionSort</span>(arr)); <span class="cm">// [2, 3, 4, 6, 8]</span>`,
+
+    py: `<span class="cm"># Insertion Sort — Python</span>
+<span class="kw">def</span> <span class="fn">insertion_sort</span>(arr):
+    <span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="num">1</span>, <span class="fn">len</span>(arr)):
+        key <span class="op">=</span> arr[i]  <span class="cm"># the element to insert</span>
+        j <span class="op">=</span> i <span class="op">-</span> <span class="num">1</span>
+        <span class="kw">while</span> j <span class="op">&gt;=</span> <span class="num">0</span> <span class="kw">and</span> arr[j] <span class="op">&gt;</span> key:
+            arr[j <span class="op">+</span> <span class="num">1</span>] <span class="op">=</span> arr[j]  <span class="cm"># shift right</span>
+            j <span class="op">-=</span> <span class="num">1</span>
+        arr[j <span class="op">+</span> <span class="num">1</span>] <span class="op">=</span> key  <span class="cm"># insert key into correct position</span>
+    <span class="kw">return</span> arr
+
+<span class="cm"># Usage</span>
+arr <span class="op">=</span> [<span class="num">6</span>, <span class="num">2</span>, <span class="num">8</span>, <span class="num">4</span>, <span class="num">3</span>]
+<span class="fn">print</span>(insertion_sort(arr))  <span class="cm"># [2, 3, 4, 6, 8]</span>`,
+  },
+
+  merge: {
+    name: 'Merge Sort',
+    accent: '#7C3AED',
+    tag: 'Divide & Conquer · Not In-place · Stable',
+    description: [
+      '<span class="tag-line">Divide and conquer: split until trivially sorted, then merge back together — always comparing the front elements of two sorted lists.</span>',
+      'Merge sort works in two phases: <strong>splitting</strong> (divide the array in half recursively until each sub-list has one element) and <strong>merging</strong> (repeatedly combine two sorted sub-lists into one sorted list).',
+      'Unlike bubble and insertion sort, merge sort is <strong>O(n log n) in all cases</strong> — it performs consistently regardless of input order. The trade-off is O(n) extra space for the temporary sub-lists.'
+    ],
+    complexity: [
+      { case: 'Best',    time: 'O(n log n)',  when: 'All cases are the same' },
+      { case: 'Average', time: 'O(n log n)',  when: 'log₂n levels × n merges per level' },
+      { case: 'Worst',   time: 'O(n log n)',  when: 'Unlike bubble/insertion, worst = best' },
+      { case: 'Space',   time: 'O(n)',         when: 'Extra memory needed for sub-lists' },
+    ],
+    pills: [
+      { label: 'All O(n log n)',  cls: 'good'   },
+      { label: 'Space O(n)',      cls: 'ok'     },
+      { label: 'Stable ✓',       cls: 'stable' },
+      { label: 'Not in-place',   cls: 'ok'     },
+    ],
+    colorKey: [
+      { color: 'var(--left-p)',  label: 'Left subarray'  },
+      { color: 'var(--right-p)', label: 'Right subarray' },
+      { color: 'var(--compare)', label: 'Comparing'      },
+      { color: 'var(--sorted)',  label: 'Merged/sorted'  },
+    ],
+    pseudocode: `<span class="ocr-kw">function</span> mergeSort(array)
+   <span class="ocr-kw">IF</span> length(array) <span class="ocr-arr">≤</span> <span class="ocr-num">1</span> <span class="ocr-kw">THEN</span>
+      <span class="ocr-kw">return</span> array             <span class="ocr-cmt">// base case: already sorted</span>
+   <span class="ocr-kw">ENDIF</span>
+   mid <span class="ocr-arr">←</span> length(array) <span class="ocr-kw">DIV</span> <span class="ocr-num">2</span>  <span class="ocr-cmt">// integer division</span>
+   left  <span class="ocr-arr">←</span> <span class="ocr-call">mergeSort</span>(array[<span class="ocr-num">0</span>:mid])   <span class="ocr-cmt">// recursive call</span>
+   right <span class="ocr-arr">←</span> <span class="ocr-call">mergeSort</span>(array[mid:])   <span class="ocr-cmt">// recursive call</span>
+   <span class="ocr-kw">return</span> <span class="ocr-call">merge</span>(left, right)
+<span class="ocr-kw">endfunction</span>
+
+<span class="ocr-kw">function</span> merge(left, right)
+   result <span class="ocr-arr">←</span> []
+   <span class="ocr-kw">WHILE</span> left <span class="ocr-arr">≠</span> [] <span class="ocr-kw">AND</span> right <span class="ocr-arr">≠</span> []
+      <span class="ocr-kw">IF</span> left[<span class="ocr-num">0</span>] <span class="ocr-arr">≤</span> right[<span class="ocr-num">0</span>] <span class="ocr-kw">THEN</span>
+         append left[<span class="ocr-num">0</span>] to result; remove left[<span class="ocr-num">0</span>]
+      <span class="ocr-kw">ELSE</span>
+         append right[<span class="ocr-num">0</span>] to result; remove right[<span class="ocr-num">0</span>]
+      <span class="ocr-kw">ENDIF</span>
+   <span class="ocr-kw">ENDWHILE</span>
+   <span class="ocr-kw">return</span> result <span class="ocr-arr">+</span> left <span class="ocr-arr">+</span> right  <span class="ocr-cmt">// append remaining elements</span>
+<span class="ocr-kw">endfunction</span>`,
+    pseudoNote: 'Two separate functions: mergeSort (splits recursively) and merge (combines two sorted lists). DIV = integer division.',
+
+    js: `<span class="cm">// Merge Sort — JavaScript</span>
+<span class="kw">function</span> <span class="fn">mergeSort</span>(arr) {
+  <span class="kw">if</span> (arr.length <span class="op">&lt;=</span> <span class="num">1</span>) <span class="kw">return</span> arr; <span class="cm">// base case</span>
+  <span class="kw">const</span> mid <span class="op">=</span> Math.<span class="fn">floor</span>(arr.length <span class="op">/</span> <span class="num">2</span>);
+  <span class="kw">const</span> left  <span class="op">=</span> <span class="fn">mergeSort</span>(arr.slice(<span class="num">0</span>, mid));
+  <span class="kw">const</span> right <span class="op">=</span> <span class="fn">mergeSort</span>(arr.slice(mid));
+  <span class="kw">return</span> <span class="fn">merge</span>(left, right);
+}
+
+<span class="kw">function</span> <span class="fn">merge</span>(left, right) {
+  <span class="kw">const</span> result <span class="op">=</span> [];
+  <span class="kw">let</span> l <span class="op">=</span> <span class="num">0</span>, r <span class="op">=</span> <span class="num">0</span>;
+  <span class="kw">while</span> (l <span class="op">&lt;</span> left.length <span class="op">&amp;&amp;</span> r <span class="op">&lt;</span> right.length) {
+    <span class="kw">if</span> (left[l] <span class="op">&lt;=</span> right[r]) {
+      result.<span class="fn">push</span>(left[l<span class="op">++</span>]);
+    } <span class="kw">else</span> {
+      result.<span class="fn">push</span>(right[r<span class="op">++</span>]);
+    }
+  }
+  <span class="kw">return</span> [...result, ...left.slice(l), ...right.slice(r)];
+}
+
+<span class="cm">// Usage</span>
+console.log(<span class="fn">mergeSort</span>([<span class="num">5</span>,<span class="num">3</span>,<span class="num">8</span>,<span class="num">1</span>,<span class="num">4</span>])); <span class="cm">// [1,3,4,5,8]</span>`,
+
+    py: `<span class="cm"># Merge Sort — Python</span>
+<span class="kw">def</span> <span class="fn">merge_sort</span>(arr):
+    <span class="kw">if</span> <span class="fn">len</span>(arr) <span class="op">&lt;=</span> <span class="num">1</span>:
+        <span class="kw">return</span> arr  <span class="cm"># base case</span>
+    mid <span class="op">=</span> <span class="fn">len</span>(arr) <span class="op">//</span> <span class="num">2</span>  <span class="cm"># // is integer division in Python</span>
+    left  <span class="op">=</span> <span class="fn">merge_sort</span>(arr[:mid])
+    right <span class="op">=</span> <span class="fn">merge_sort</span>(arr[mid:])
+    <span class="kw">return</span> <span class="fn">merge</span>(left, right)
+
+<span class="kw">def</span> <span class="fn">merge</span>(left, right):
+    result <span class="op">=</span> []
+    l, r <span class="op">=</span> <span class="num">0</span>, <span class="num">0</span>
+    <span class="kw">while</span> l <span class="op">&lt;</span> <span class="fn">len</span>(left) <span class="kw">and</span> r <span class="op">&lt;</span> <span class="fn">len</span>(right):
+        <span class="kw">if</span> left[l] <span class="op">&lt;=</span> right[r]:
+            result.<span class="fn">append</span>(left[l]); l <span class="op">+=</span> <span class="num">1</span>
+        <span class="kw">else</span>:
+            result.<span class="fn">append</span>(right[r]); r <span class="op">+=</span> <span class="num">1</span>
+    <span class="kw">return</span> result <span class="op">+</span> left[l:] <span class="op">+</span> right[r:]  <span class="cm"># append remaining</span>
+
+<span class="cm"># Usage</span>
+<span class="fn">print</span>(merge_sort([<span class="num">5</span>, <span class="num">3</span>, <span class="num">8</span>, <span class="num">1</span>, <span class="num">4</span>]))  <span class="cm"># [1, 3, 4, 5, 8]</span>`,
+  },
+
+  quick: {
+    name: 'Quick Sort',
+    accent: '#DC2626',
+    tag: 'Divide & Conquer · In-place · Not Stable',
+    description: [
+      '<span class="tag-line">Choose a pivot, partition everything smaller to its left and larger to its right — then the pivot is permanently in place. Recurse on each side.</span>',
+      'Quick sort selects the <strong>last element as the pivot</strong>. It partitions the array so all elements ≤ pivot go left and all elements > pivot go right. The pivot then sits in its <strong>final sorted position permanently</strong>. Quick sort then recurses on the left and right partitions.',
+      '<strong>Worst case O(n²)</strong> occurs when the pivot is always the smallest or largest element (e.g. sorted array with last-element pivot). This can be avoided with a <strong>randomised pivot</strong>. In practice, quick sort is often faster than merge sort due to better cache performance.'
+    ],
+    complexity: [
+      { case: 'Best',    time: 'O(n log n)',  when: 'Pivot always lands near the middle' },
+      { case: 'Average', time: 'O(n log n)',  when: 'Random data — pivot near middle on average' },
+      { case: 'Worst',   time: 'O(n²)',        when: 'Sorted/reverse-sorted + last-element pivot' },
+      { case: 'Space',   time: 'O(log n)',     when: 'Recursive call stack (in-place for data)' },
+    ],
+    pills: [
+      { label: 'Best O(n log n)', cls: 'good'     },
+      { label: 'Avg O(n log n)',  cls: 'good'     },
+      { label: 'Worst O(n²)',     cls: 'bad'      },
+      { label: 'Space O(log n)',  cls: 'space'    },
+      { label: 'Not stable ✗',   cls: 'unstable' },
+    ],
+    colorKey: [
+      { color: 'var(--pivot)',    label: 'Pivot'         },
+      { color: 'var(--compare)', label: 'Comparing'     },
+      { color: 'var(--swap)',    label: 'Swapping'      },
+      { color: 'var(--sorted)',  label: 'Pivot placed'  },
+    ],
+    pseudocode: `<span class="ocr-kw">procedure</span> quickSort(array, lo, hi)
+   <span class="ocr-kw">IF</span> lo <span class="ocr-arr">&lt;</span> hi <span class="ocr-kw">THEN</span>
+      pivot <span class="ocr-arr">←</span> array[hi]              <span class="ocr-cmt">// last element as pivot</span>
+      i <span class="ocr-arr">←</span> lo <span class="ocr-arr">−</span> <span class="ocr-num">1</span>
+      <span class="ocr-kw">FOR</span> j <span class="ocr-arr">←</span> lo <span class="ocr-kw">TO</span> hi <span class="ocr-arr">−</span> <span class="ocr-num">1</span>
+         <span class="ocr-kw">IF</span> array[j] <span class="ocr-arr">≤</span> pivot <span class="ocr-kw">THEN</span>
+            i <span class="ocr-arr">←</span> i <span class="ocr-arr">+</span> <span class="ocr-num">1</span>
+            temp <span class="ocr-arr">←</span> array[i]         <span class="ocr-cmt">// swap array[i] and array[j]</span>
+            array[i] <span class="ocr-arr">←</span> array[j]
+            array[j] <span class="ocr-arr">←</span> temp
+         <span class="ocr-kw">ENDIF</span>
+      <span class="ocr-kw">NEXT</span> j
+      <span class="ocr-cmt">// place pivot in its final position</span>
+      temp <span class="ocr-arr">←</span> array[i <span class="ocr-arr">+</span> <span class="ocr-num">1</span>]
+      array[i <span class="ocr-arr">+</span> <span class="ocr-num">1</span>] <span class="ocr-arr">←</span> array[hi]
+      array[hi] <span class="ocr-arr">←</span> temp
+      p <span class="ocr-arr">←</span> i <span class="ocr-arr">+</span> <span class="ocr-num">1</span>
+      <span class="ocr-call">quickSort</span>(array, lo, p <span class="ocr-arr">−</span> <span class="ocr-num">1</span>)   <span class="ocr-cmt">// recurse left</span>
+      <span class="ocr-call">quickSort</span>(array, p <span class="ocr-arr">+</span> <span class="ocr-num">1</span>, hi)   <span class="ocr-cmt">// recurse right</span>
+   <span class="ocr-kw">ENDIF</span>
+<span class="ocr-kw">endprocedure</span>
+
+<span class="ocr-cmt">// Call with: quickSort(array, 0, length(array) − 1)</span>`,
+    pseudoNote: 'i tracks the boundary between elements ≤ pivot and elements > pivot. After the loop, pivot swaps with array[i+1] to reach its final position.',
+
+    js: `<span class="cm">// Quick Sort — JavaScript</span>
+<span class="kw">function</span> <span class="fn">quickSort</span>(arr, lo <span class="op">=</span> <span class="num">0</span>, hi <span class="op">=</span> arr.length <span class="op">-</span> <span class="num">1</span>) {
+  <span class="kw">if</span> (lo <span class="op">&gt;=</span> hi) <span class="kw">return</span>; <span class="cm">// base case</span>
+  <span class="kw">const</span> p <span class="op">=</span> <span class="fn">partition</span>(arr, lo, hi);
+  <span class="fn">quickSort</span>(arr, lo, p <span class="op">-</span> <span class="num">1</span>);  <span class="cm">// recurse left</span>
+  <span class="fn">quickSort</span>(arr, p <span class="op">+</span> <span class="num">1</span>, hi); <span class="cm">// recurse right</span>
+  <span class="kw">return</span> arr;
+}
+
+<span class="kw">function</span> <span class="fn">partition</span>(arr, lo, hi) {
+  <span class="kw">const</span> pivot <span class="op">=</span> arr[hi];
+  <span class="kw">let</span> i <span class="op">=</span> lo <span class="op">-</span> <span class="num">1</span>;
+  <span class="kw">for</span> (<span class="kw">let</span> j <span class="op">=</span> lo; j <span class="op">&lt;</span> hi; j<span class="op">++</span>) {
+    <span class="kw">if</span> (arr[j] <span class="op">&lt;=</span> pivot) {
+      [arr[<span class="op">++</span>i], arr[j]] <span class="op">=</span> [arr[j], arr[i]];
+    }
+  }
+  [arr[i <span class="op">+</span> <span class="num">1</span>], arr[hi]] <span class="op">=</span> [arr[hi], arr[i <span class="op">+</span> <span class="num">1</span>]]; <span class="cm">// place pivot</span>
+  <span class="kw">return</span> i <span class="op">+</span> <span class="num">1</span>;
+}
+
+<span class="cm">// Usage</span>
+<span class="kw">const</span> arr <span class="op">=</span> [<span class="num">5</span>,<span class="num">3</span>,<span class="num">8</span>,<span class="num">1</span>,<span class="num">4</span>];
+<span class="fn">quickSort</span>(arr);
+console.log(arr); <span class="cm">// [1,3,4,5,8]</span>`,
+
+    py: `<span class="cm"># Quick Sort — Python</span>
+<span class="kw">def</span> <span class="fn">quick_sort</span>(arr, lo<span class="op">=</span><span class="num">0</span>, hi<span class="op">=</span><span class="kw">None</span>):
+    <span class="kw">if</span> hi <span class="kw">is</span> <span class="kw">None</span>:
+        hi <span class="op">=</span> <span class="fn">len</span>(arr) <span class="op">-</span> <span class="num">1</span>
+    <span class="kw">if</span> lo <span class="op">&gt;=</span> hi:
+        <span class="kw">return</span>  <span class="cm"># base case</span>
+    p <span class="op">=</span> <span class="fn">partition</span>(arr, lo, hi)
+    <span class="fn">quick_sort</span>(arr, lo, p <span class="op">-</span> <span class="num">1</span>)   <span class="cm"># recurse left</span>
+    <span class="fn">quick_sort</span>(arr, p <span class="op">+</span> <span class="num">1</span>, hi)  <span class="cm"># recurse right</span>
+
+<span class="kw">def</span> <span class="fn">partition</span>(arr, lo, hi):
+    pivot <span class="op">=</span> arr[hi]
+    i <span class="op">=</span> lo <span class="op">-</span> <span class="num">1</span>
+    <span class="kw">for</span> j <span class="kw">in</span> <span class="fn">range</span>(lo, hi):
+        <span class="kw">if</span> arr[j] <span class="op">&lt;=</span> pivot:
+            i <span class="op">+=</span> <span class="num">1</span>
+            arr[i], arr[j] <span class="op">=</span> arr[j], arr[i]
+    arr[i <span class="op">+</span> <span class="num">1</span>], arr[hi] <span class="op">=</span> arr[hi], arr[i <span class="op">+</span> <span class="num">1</span>]  <span class="cm"># place pivot</span>
+    <span class="kw">return</span> i <span class="op">+</span> <span class="num">1</span>
+
+<span class="cm"># Usage</span>
+arr <span class="op">=</span> [<span class="num">5</span>, <span class="num">3</span>, <span class="num">8</span>, <span class="num">1</span>, <span class="num">4</span>]
+<span class="fn">quick_sort</span>(arr)
+<span class="fn">print</span>(arr)  <span class="cm"># [1, 3, 4, 5, 8]</span>`,
+  },
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// STEP GENERATORS — produce arrays of animation frames for each algorithm
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function* bubbleSteps(input) {
+  const a = [...input];
+  const n = a.length;
+  const sorted = new Set();
+  let comps = 0, swaps = 0;
+  for (let i = 0; i < n - 1; i++) {
+    let swapped = false;
+    for (let j = 0; j < n - 1 - i; j++) {
+      comps++;
+      yield { a:[...a], comparing:[j,j+1], sorted, comps, swaps, label:`Comparing [${j}]=${a[j]} and [${j+1}]=${a[j+1]}` };
+      if (a[j] > a[j+1]) {
+        swaps++;
+        yield { a:[...a], swapping:[j,j+1], sorted, comps, swaps, label:`${a[j]} > ${a[j+1]} → SWAP` };
+        [a[j],a[j+1]] = [a[j+1],a[j]];
+        yield { a:[...a], swapping:[j,j+1], sorted, comps, swaps, label:`Swapped → [${a[j]}, ${a[j+1]}]` };
+        swapped = true;
+      }
+    }
+    sorted.add(n-1-i);
+    yield { a:[...a], sorted:new Set(sorted), comps, swaps, label:`Pass ${i+1} complete — ${a[n-1-i]} is in its final position` };
+    if (!swapped) break;
+  }
+  for (let k=0;k<n;k++) sorted.add(k);
+  yield { a:[...a], sorted:new Set(sorted), comps, swaps, label:'Sorted! ✓', done:true };
+}
+
+function* insertionSteps(input) {
+  const a = [...input];
+  const n = a.length;
+  const sorted = new Set([0]);
+  let comps = 0, swaps = 0;
+  yield { a:[...a], sorted:new Set(sorted), comps, swaps, label:`Start: [0]=${a[0]} trivially sorted` };
+  for (let i = 1; i < n; i++) {
+    const key = a[i];
+    yield { a:[...a], key:[i], sorted:new Set(sorted), comps, swaps, label:`Pass ${i}: key = ${key}` };
+    let j = i - 1;
+    let shifted = false;
+    while (j >= 0 && a[j] > key) {
+      comps++;
+      yield { a:[...a], key:[j+1], comparing:[j, j+1], sorted:new Set(sorted), comps, swaps, label:`${a[j]} > ${key} → shift ${a[j]} right` };
+      a[j+1] = a[j];
+      swaps++;
+      yield { a:[...a], key:[j], sorted:new Set(sorted), comps, swaps, label:`Shifted ${a[j+1]} to [${j+1}]` };
+      j--;
+      shifted = true;
+    }
+    if (!shifted) { comps++; }
+    a[j+1] = key;
+    sorted.add(i);
+    yield { a:[...a], sorted:new Set(sorted), comps, swaps, label:`Inserted ${key} at [${j+1}] — sorted portion: [0..${i}]` };
+  }
+  for (let k=0;k<n;k++) sorted.add(k);
+  yield { a:[...a], sorted:new Set(sorted), comps, swaps, label:'Sorted! ✓', done:true };
+}
+
+function* mergeSteps(input) {
+  const a = [...input];
+  let comps = 0, swaps = 0;
+  const sorted = new Set();
+
+  function* ms(arr, offset) {
+    if (arr.length <= 1) return arr;
+    const mid = Math.floor(arr.length / 2);
+    // Show split
+    const leftIdx  = Array.from({length:mid},     (_,i)=>offset+i);
+    const rightIdx = Array.from({length:arr.length-mid},(_,i)=>offset+mid+i);
+    yield { a:[...a], leftPart:leftIdx, rightPart:rightIdx, sorted:new Set(sorted), comps, swaps, label:`Split [${offset}..${offset+arr.length-1}] → [${offset}..${offset+mid-1}] and [${offset+mid}..${offset+arr.length-1}]` };
+
+    const left  = yield* ms(arr.slice(0,mid), offset);
+    const right = yield* ms(arr.slice(mid),   offset+mid);
+
+    // Merge
+    const result = [];
+    let l=0, r=0;
+    while (l < left.length && r < right.length) {
+      comps++;
+      const li = offset+l, ri = offset+mid+r;
+      yield { a:[...a], comparing:[li,ri], sorted:new Set(sorted), comps, swaps, label:`Merge: compare ${left[l]} and ${right[r]}` };
+      if (left[l] <= right[r]) {
+        result.push(left[l++]);
+      } else {
+        result.push(right[r++]);
+        swaps++;
+      }
+    }
+    while (l < left.length) result.push(left[l++]);
+    while (r < right.length) result.push(right[r++]);
+
+    for (let i=0;i<result.length;i++) {
+      a[offset+i] = result[i];
+      sorted.add(offset+i);
+    }
+    yield { a:[...a], sorted:new Set(sorted), comps, swaps, label:`Merged [${offset}..${offset+result.length-1}] → [${result.join(',')}]` };
+    return result;
+  }
+
+  yield* ms([...a], 0);
+  for (let k=0;k<a.length;k++) sorted.add(k);
+  yield { a:[...a], sorted:new Set(sorted), comps, swaps, label:'Sorted! ✓', done:true };
+}
+
+function* quickSteps(input) {
+  const a = [...input];
+  let comps = 0, swaps = 0;
+  const sorted = new Set();
+
+  function* qs(lo, hi) {
+    if (lo >= hi) { if(lo===hi) sorted.add(lo); return; }
+    const pivotVal = a[hi];
+    yield { a:[...a], pivotIdx:[hi], sorted:new Set(sorted), comps, swaps, label:`Partition [${lo}..${hi}] — pivot = ${pivotVal} (index ${hi})` };
+    let i = lo - 1;
+    for (let j=lo; j<hi; j++) {
+      comps++;
+      yield { a:[...a], comparing:[j,hi], pivotIdx:[hi], sorted:new Set(sorted), comps, swaps, label:`Compare ${a[j]} ≤ ${pivotVal}?` };
+      if (a[j] <= pivotVal) {
+        i++;
+        if (i !== j) {
+          swaps++;
+          yield { a:[...a], swapping:[i,j], pivotIdx:[hi], sorted:new Set(sorted), comps, swaps, label:`${a[j]} ≤ ${pivotVal} → swap [${i}] and [${j}]` };
+          [a[i],a[j]] = [a[j],a[i]];
+          yield { a:[...a], swapping:[i,j], pivotIdx:[hi], sorted:new Set(sorted), comps, swaps, label:`Swapped` };
+        }
+      }
+    }
+    // Place pivot
+    swaps++;
+    [a[i+1], a[hi]] = [a[hi], a[i+1]];
+    sorted.add(i+1);
+    yield { a:[...a], sorted:new Set(sorted), comps, swaps, label:`Pivot ${pivotVal} placed at index ${i+1} — final position ✓` };
+    yield* qs(lo,   i);
+    yield* qs(i+2, hi);
+  }
+
+  yield* qs(0, a.length-1);
+  for(let k=0;k<a.length;k++) sorted.add(k);
+  yield { a:[...a], sorted:new Set(sorted), comps, swaps, label:'Sorted! ✓', done:true };
+}
+
+const GENERATORS = { bubble:bubbleSteps, insertion:insertionSteps, merge:mergeSteps, quick:quickSteps };
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// APP STATE
+// ═══════════════════════════════════════════════════════════════════════════════
+
+let state = {
+  algo: 'bubble',
+  arraySize: 20,
+  array: [],
+  steps: [],
+  stepIdx: 0,
+  playing: false,
+  speed: 50,
+  codeTab: 'pseudo',  // 'pseudo' | 'js' | 'py'
+};
+
+function randomArray(n) {
+  return Array.from({length:n}, ()=>Math.floor(Math.random()*95)+5);
+}
+
+function generateSteps(algo, arr) {
+  const gen = GENERATORS[algo](arr);
+  const steps = [];
+  for (const s of gen) steps.push(s);
+  return steps;
+}
+
+function reset() {
+  clearTimeout(state.timer);
+  state.playing = false;
+  state.array = randomArray(state.arraySize);
+  state.steps = generateSteps(state.algo, [...state.array]);
+  state.stepIdx = 0;
+  renderVis();
+  renderControls();
+  updateStatusBar('Ready — press Play or Step to begin');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// RENDERING
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function renderVis() {
+  const step = state.steps[state.stepIdx] || { a: state.array, sorted: new Set() };
+  const bars = document.getElementById('bars');
+  if (!bars) return;
+  const arr = step.a || state.array;
+  const max = Math.max(...arr);
+  const n = arr.length;
+
+  // Keep existing bar elements if count matches (smoother)
+  if (bars.children.length !== n) {
+    bars.innerHTML = arr.map((_,i) => `<div class="bar" data-i="${i}"></div>`).join('');
+  }
+
+  const comparing  = new Set(step.comparing  || []);
+  const swapping   = new Set(step.swapping   || []);
+  const sorted     = step.sorted    || new Set();
+  const pivotIdx   = new Set(step.pivotIdx   || []);
+  const leftPart   = new Set(step.leftPart   || []);
+  const rightPart  = new Set(step.rightPart  || []);
+  const keySet     = new Set(step.key        || []);
+
+  [...bars.children].forEach((bar, i) => {
+    const pct = (arr[i] / max * 100).toFixed(1);
+    bar.style.height = pct + '%';
+    bar.className = 'bar';
+    if (sorted.has(i))    bar.classList.add('sorted');
+    if (comparing.has(i)) bar.classList.add('comparing');
+    if (swapping.has(i))  bar.classList.add('swapping');
+    if (pivotIdx.has(i))  bar.classList.add('pivot');
+    if (leftPart.has(i))  bar.classList.add('left-part');
+    if (rightPart.has(i)) bar.classList.add('right-part');
+    if (keySet.has(i))    bar.classList.add('key');
+  });
+
+  // Stats
+  const el = id => document.getElementById(id);
+  if (el('stat-comps')) el('stat-comps').textContent = step.comps ?? 0;
+  if (el('stat-swaps')) el('stat-swaps').textContent = step.swaps ?? 0;
+  if (el('stat-step'))  el('stat-step').textContent  = `${state.stepIdx + 1} / ${state.steps.length}`;
+  if (step.label) updateStatusBar(step.label, step.done);
+}
+
+function updateStatusBar(msg, done=false) {
+  const sb = document.getElementById('statusBar');
+  if (!sb) return;
+  sb.innerHTML = done
+    ? `<span class="step-label">✓ Complete</span> — ${msg}`
+    : `<span class="step-label">→</span> ${msg}`;
+}
+
+function renderControls() {
+  const playBtn = document.getElementById('playBtn');
+  const stepBtn = document.getElementById('stepBtn');
+  if (!playBtn || !stepBtn) return;
+  const finished = state.stepIdx >= state.steps.length - 1;
+  playBtn.textContent = state.playing ? '⏸ Pause' : '▶ Play';
+  playBtn.disabled = finished;
+  stepBtn.disabled = finished || state.playing;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PLAYBACK
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function step() {
+  if (state.stepIdx < state.steps.length - 1) {
+    state.stepIdx++;
+    renderVis();
+    renderControls();
+  } else {
+    state.playing = false;
+    renderControls();
+  }
+}
+
+function togglePlay() {
+  state.playing = !state.playing;
+  renderControls();
+  if (state.playing) tick();
+}
+
+function tick() {
+  if (!state.playing) return;
+  if (state.stepIdx >= state.steps.length - 1) {
+    state.playing = false;
+    renderControls();
+    return;
+  }
+  step();
+  const delay = Math.round(600 / (state.speed / 10 + 1));
+  state.timer = setTimeout(tick, delay);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// RENDERING THE PAGE
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function switchAlgo(algo) {
+  clearTimeout(state.timer);
+  state.playing = false;
+  state.algo = algo;
+  document.querySelectorAll('nav button').forEach(b => {
+    b.classList.toggle('active', b.dataset.algo === algo);
+  });
+  renderPage();
+  reset();
+}
+
+function switchCode(tab) {
+  state.codeTab = tab;
+  document.querySelectorAll('.code-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  const panels = document.querySelectorAll('.code-panel');
+  panels.forEach(p => p.style.display = p.dataset.tab === tab ? 'block' : 'none');
+}
+
+function setSize(n) {
+  state.arraySize = n;
+  document.querySelectorAll('.size-btn').forEach(b => b.classList.toggle('active', +b.dataset.n === n));
+  reset();
+}
+
+function renderPage() {
+  const algo = ALGOS[state.algo];
+  const root = document.getElementById('appRoot');
+  const accent = algo.accent;
+
+  root.style.setProperty('--accent-color', accent);
+
+  root.innerHTML = `
+    <div class="algo-header">
+      <div>
+        <div class="algo-title">
+          <span class="accent" style="color:${accent}">${state.algo}.sort()</span>
+          ${algo.name}
+        </div>
+        <div style="color:var(--muted);font-size:0.8rem;margin-top:0.4rem;font-family:var(--mono)">${algo.tag}</div>
+      </div>
+      <div class="complexity-pills">
+        ${algo.pills.map(p=>`<span class="pill ${p.cls}">${p.label}</span>`).join('')}
+      </div>
+    </div>
+
+    <!-- VISUALISER (full width) -->
+    <div class="card vis-card" style="margin-bottom:1.5rem">
+      <div class="card-header" style="color:${accent}">
+        <div style="display:flex;align-items:center;gap:0.5rem">
+          <div class="dot" style="background:${accent}"></div>
+          VISUALISER
+        </div>
+        <div class="size-btns">
+          ${[10,20,30,40].map(n=>`<button class="size-btn ${state.arraySize===n?'active':''}" data-n="${n}" onclick="setSize(${n})" style="${state.arraySize===n?'--accent-color:'+accent:''}">${n} elements</button>`).join('')}
+        </div>
+      </div>
+      <div class="vis-wrap" id="bars"></div>
+      <div class="key-row">
+        ${algo.colorKey.map(k=>`<span class="key-item"><span class="key-dot" style="background:${k.color}"></span>${k.label}</span>`).join('')}
+      </div>
+      <div class="vis-controls">
+        <button class="btn" onclick="reset()">↺ New array</button>
+        <button class="btn primary" id="playBtn" onclick="togglePlay()" style="--accent-color:${accent}">▶ Play</button>
+        <button class="btn" id="stepBtn" onclick="step()">⏭ Step</button>
+        <div class="stats">
+          <span class="stat">comparisons: <span id="stat-comps">0</span></span>
+          <span class="stat">swaps: <span id="stat-swaps">0</span></span>
+          <span class="stat">step: <span id="stat-step">—</span></span>
+        </div>
+        <div class="speed-wrap">
+          slow
+          <input type="range" min="1" max="100" value="${state.speed}"
+            oninput="state.speed=+this.value">
+          fast
+        </div>
+      </div>
+      <div class="status-bar" id="statusBar">Ready — press Play or Step to begin</div>
+    </div>
+
+    <!-- DESCRIPTION + COMPLEXITY -->
+    <div class="two-col" style="margin-bottom:1.5rem">
+      <div class="card">
+        <div class="card-header"><div class="dot" style="background:${accent}"></div>DESCRIPTION</div>
+        <div class="card-body desc">
+          ${algo.description.map(d=>`<p>${d}</p>`).join('')}
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="dot" style="background:${accent}"></div>COMPLEXITY</div>
+        <div class="card-body" style="padding:0">
+          <table class="complexity-table">
+            <thead><tr><th>Case</th><th>Time</th><th>When?</th></tr></thead>
+            <tbody>
+              ${algo.complexity.map(row=>{
+                const cls = row.time.includes('n²')?'bad-c':row.time.includes('n log')||row.time==='O(n)'?'good-c':row.time.includes('log')?'good-c':'neu-c';
+                return `<tr><td>${row.case}</td><td class="${cls}">${row.time}</td><td style="color:var(--muted);font-family:var(--sans);font-size:0.78rem">${row.when}</td></tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- CODE (full width, tabbed) -->
+    <div class="section-label">Code</div>
+    <div class="card" style="margin-bottom:1.5rem">
+      <div class="card-header" style="padding:0">
+        <div class="code-tabs">
+          <button class="code-tab ${state.codeTab==='pseudo'?'active':''}" data-tab="pseudo" onclick="switchCode('pseudo')" style="${state.codeTab==='pseudo'?'--accent-color:'+accent:''}">
+            OCR Pseudocode
+          </button>
+          <button class="code-tab ${state.codeTab==='js'?'active':''}" data-tab="js" onclick="switchCode('js')" style="${state.codeTab==='js'?'--accent-color:'+accent:''}">
+            JavaScript
+          </button>
+          <button class="code-tab ${state.codeTab==='py'?'active':''}" data-tab="py" onclick="switchCode('py')" style="${state.codeTab==='py'?'--accent-color:'+accent:''}">
+            Python
+          </button>
+        </div>
+      </div>
+      <div class="code-panel" data-tab="pseudo" style="display:${state.codeTab==='pseudo'?'block':'none'}">
+        <div class="pseudo-wrap">
+          <pre>${algo.pseudocode}</pre>
+          <div class="pseudo-note">${algo.pseudoNote}</div>
+        </div>
+      </div>
+      <div class="code-panel" data-tab="js" style="display:${state.codeTab==='js'?'block':'none'}">
+        <pre>${algo.js}</pre>
+      </div>
+      <div class="code-panel" data-tab="py" style="display:${state.codeTab==='py'?'block':'none'}">
+        <pre>${algo.py}</pre>
+      </div>
+    </div>
+
+    <!-- MASTER COMPARISON TABLE -->
+    <div class="section-label">All algorithms at a glance</div>
+    <div class="card">
+      <div class="card-header"><div class="dot" style="background:var(--muted)"></div>OCR H446 SECTION 2.3.1(f) — STANDARD ALGORITHMS</div>
+      <div class="card-body" style="padding:0">
+        <table class="complexity-table">
+          <thead>
+            <tr>
+              <th>Algorithm</th><th>Best</th><th>Average</th><th>Worst</th>
+              <th>Space</th><th>Stable?</th><th>In-place?</th><th>Choose when…</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${[
+              ['Bubble Sort',   '#0891B2','O(n)','good-c',     'O(n²)','bad-c',  'O(n²)','bad-c',  'O(1)','good-c', '✓','✓','Tiny / nearly sorted'],
+              ['Insertion Sort','#059669','O(n)','good-c',     'O(n²)','bad-c',  'O(n²)','bad-c',  'O(1)','good-c', '✓','✓','Small n, streaming data'],
+              ['Merge Sort',   '#7C3AED','O(n log n)','good-c','O(n log n)','good-c','O(n log n)','good-c','O(n)','ok-c','✓','✗','Large n, stable required'],
+              ['Quick Sort',   '#DC2626','O(n log n)','good-c','O(n log n)','good-c','O(n²)','bad-c',  'O(log n)','good-c','✗','✓','Large n, memory limited'],
+            ].map(([name,col,best,bc,avg,ac,worst,wc,space,sc,stable,ip,use])=>`
+              <tr style="${state.algo===name.toLowerCase().split(' ')[0]?'background:rgba(255,255,255,0.03)':''}">
+                <td style="color:${col};font-weight:600">${name}</td>
+                <td class="${bc}">${best}</td>
+                <td class="${ac}">${avg}</td>
+                <td class="${wc}">${worst}</td>
+                <td class="${sc}">${space}</td>
+                <td style="color:${stable==='✓'?'var(--sorted)':'var(--pivot)'}">${stable}</td>
+                <td style="color:${ip==='✓'?'var(--sorted)':'var(--muted)'}">${ip}</td>
+                <td style="color:var(--muted);font-family:var(--sans);font-size:0.78rem">${use}</td>
+              </tr>`
+            ).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+// ── INIT ─────────────────────────────────────────────────────────────────────
+renderPage();
+reset();
+</script>
+</body>
+</html>
+HTMLEOF
